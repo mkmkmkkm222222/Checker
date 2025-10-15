@@ -1,0 +1,6 @@
+# Kredensial lokal jangan di-upload
+mycreds.txt
+
+# Folder virtual environment
+venv/
+__pycache__/
