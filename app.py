@@ -14,20 +14,36 @@ DAFTAR_SUPIR = [
 ID_FOLDER_INDUK = "1N24o7wGAHb8VraIVOYEchTKRtm5alCfC" 
 
 # --- PENGATURAN NOTIFIKASI TELEGRAM ---
-TELEGRAM_BOT_TOKEN = "8121771510:AAGRjyyIguXiOrKDZMuD0pwiN8JBuobSAKc"
-TELEGRAM_CHAT_ID = "8401956870"
+TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
+TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID')
 
 # Inisialisasi Aplikasi Web
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'rahasia-banget-loh'
 
 def otentikasi_google_drive():
+    # Ambil konten kredensial dari Environment Variable
+    creds_json_str = os.environ.get('GOOGLE_CREDS_JSON')
+
+    # Jika ada, tulis ke dalam file mycreds.txt
+    if creds_json_str:
+        with open("mycreds.txt", "w") as creds_file:
+            creds_file.write(creds_json_str)
+    
     gauth = GoogleAuth()
+    # Otentikasi langsung dari file yang baru saja dibuat
     gauth.LoadCredentialsFile("mycreds.txt")
-    if gauth.credentials is None or gauth.access_token_expired:
-        gauth.CommandLineAuth()
+    
+    if gauth.credentials is None:
+        # Jika file tidak ada atau kosong, coba otentikasi dari web server
+        gauth.WebAuth()
+    elif gauth.access_token_expired:
+        # Jika token sudah kadaluarsa, refresh
+        gauth.Refresh()
     else:
+        # Jika kredensial valid, otorisasi
         gauth.Authorize()
+        
     gauth.SaveCredentialsFile("mycreds.txt")
     return GoogleDrive(gauth)
 
@@ -132,6 +148,6 @@ def upload():
         print(f"Error di fungsi upload: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
-if __name__ == '__main__':
-    print("Untuk memulai, buka browser dan akses alamat: http://127.0.0.1:5000")
-    app.run(host='0.0.0.0', port=5000, debug=False)
+# if __name__ == '__main__':
+#     print("Untuk memulai, buka browser dan akses alamat: http://127.0.0.1:5000")
+#     app.run(host='0.0.0.0', port=5000, debug=False)
